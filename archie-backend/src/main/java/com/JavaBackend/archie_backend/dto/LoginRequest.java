@@ -2,29 +2,17 @@ package com.JavaBackend.archie_backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
-public class SignupRequest {
-
-    @NotBlank
-    private String username;
+public class LoginRequest {
 
     @Email
     @NotBlank
     private String email;
 
-    @Size(min = 6)
+    @NotBlank
     private String password;
 
-    public SignupRequest() {}
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public LoginRequest() {}
 
     public String getEmail() {
         return email;
