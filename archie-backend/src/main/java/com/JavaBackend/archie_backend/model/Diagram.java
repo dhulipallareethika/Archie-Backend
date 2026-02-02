@@ -1,9 +1,7 @@
 package com.JavaBackend.archie_backend.model;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
-import java.time.LocalDateTime;
 
 @Document(collection = "diagrams")
 public class Diagram {
@@ -11,19 +9,23 @@ public class Diagram {
     private String diagramId;
     private String projectId;
     private String diagramType; 
-    private String umlCode;    
-    private String status;      // PENDING, COMPLETED, FAILED
+    private DiagramCode umlcode;
+    private String status;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
+    public static class DiagramCode {
+        private String type; // Will be "plantuml" or "mermaid"
+        private String code; // The actual UML string
 
-    public Diagram() {}
+        public DiagramCode() {}
+        public DiagramCode(String type, String code) {
+            this.type = type;
+            this.code = code;
+        }
 
-    public Diagram(String projectId, String diagramType, String umlCode, String status) {
-        this.projectId = projectId;
-        this.diagramType = diagramType;
-        this.umlCode = umlCode;
-        this.status = status;
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        public String getCode() { return code; }
+        public void setCode(String code) { this.code = code; }
     }
 
     // Getters and Setters
@@ -33,8 +35,8 @@ public class Diagram {
     public void setProjectId(String projectId) { this.projectId = projectId; }
     public String getDiagramType() { return diagramType; }
     public void setDiagramType(String diagramType) { this.diagramType = diagramType; }
-    public String getUmlCode() { return umlCode; }
-    public void setUmlCode(String umlCode) { this.umlCode = umlCode; }
+    public DiagramCode getUmlcode() { return umlcode; }
+    public void setUmlcode(DiagramCode umlcode) { this.umlcode = umlcode; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 }

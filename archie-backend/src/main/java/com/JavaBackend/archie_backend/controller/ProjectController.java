@@ -16,22 +16,25 @@ import java.util.Map;
 public class ProjectController {
 
     @Autowired 
-    private ProjectService1 projectService;
+    private ProjectService projectService;
 
     // 1. CREATE: Analyzes BRD and saves the project
-    @PostMapping
-    public ResponseEntity<?> createProject(@RequestBody Project project, 
-                                          @AuthenticationPrincipal UserDetails userDetails) {
-        try {
-            // userDetails.getUsername() contains the userId from our JWT fix
-            project.setUserId(userDetails.getUsername());
-            Project savedProject = projectService.createProject(project);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(Map.of("error", "Failed to create project: " + e.getMessage()));
+@PostMapping
+public ResponseEntity<?> createProject(@RequestBody Project project, 
+                                      @AuthenticationPrincipal UserDetails userDetails) {
+    try {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
         }
+        // Take projectName and brdText from input, set userId from Token
+        project.setUserId(userDetails.getUsername());
+        
+        Project savedProject = projectService.createProject(project);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
     }
+}
 
     // 2. LIST ALL: Returns names and IDs for the dashboard
     @GetMapping

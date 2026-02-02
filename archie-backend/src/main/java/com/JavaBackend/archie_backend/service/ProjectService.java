@@ -8,41 +8,49 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-public class ProjectService1 {
+public class ProjectService {
 
     @Autowired private ProjectRepository projectRepository;
-    @Autowired private AIService aiService;
 
-    private final boolean MOCK_MODE = true; // Set to false to use Python AI
+    private final boolean MOCK_MODE = true; 
 
     public Project createProject(Project project) {
-        // 1. Set metadata for the project
+        project.setProjectId(null); // Force unique ID
         project.setCreatedAt(LocalDateTime.now().toString());
         project.setUpdatedAt(LocalDateTime.now().toString());
 
         if (MOCK_MODE) {
-            // Mock data matches the structure the frontend expects for rendering
-            project.setClasses(List.of(
-                Map.of("name", "User", "attributes", List.of("id", "username", "email")),
-                Map.of("name", "Order", "attributes", List.of("orderId", "amount", "status"))
-            ));
-            project.setRelationships(List.of(
-                Map.of("source", "User", "target", "Order", "type", "one-to-many")
-            ));
-        } else {
-            // AI Logic
-            Map<String, Object> aiResponse = aiService.analyzeBRD(project.getBrdText());
-            
-            // Safe casting and fallback to empty lists if AI fails
-            project.setClasses((List<Object>) aiResponse.getOrDefault("classes", new ArrayList<>()));
-            project.setRelationships((List<Object>) aiResponse.getOrDefault("relationships", new ArrayList<>()));
+            // Create a Mock ClassModel
+            Project.ClassModel userClass = new Project.ClassModel();
+            userClass.className = "User";
+
+            // Create a Mock Attribute
+            Project.Attribute idAttr = new Project.Attribute();
+            idAttr.name = "id";
+            idAttr.type = "String";
+            idAttr.nature = Project.Attribute.Nature.Identifying;
+            idAttr.required = true;
+
+            // Create a Mock Relationship
+            Project.Relationship rel = new Project.Relationship();
+            rel.source = "User";
+            rel.target = "Order";
+            rel.nature = Project.Relationship.Nature.Association;
+            rel.sourcetype = Project.Relationship.Type.One;
+            rel.targettype = Project.Relationship.Type.Many;
+            rel.label = "places";
+
+            userClass.attributes = List.of(idAttr);
+            userClass.relationships = List.of(rel);
+
+            project.setClasses(List.of(userClass));
         }
         
         return projectRepository.save(project);
     }
 
     public List<Map<String, String>> getProjectNamesByUserId(String userId) {
-        // We use LinkedHashMap to ensure the order of keys (projectid, projectname) is consistent
+        if (userId == null) return Collections.emptyList();
         return projectRepository.findByUserId(userId).stream()
                 .map(p -> {
                     Map<String, String> map = new LinkedHashMap<>();
@@ -54,16 +62,12 @@ public class ProjectService1 {
 
     public Project getProjectById(String projectId) {
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new NoSuchElementException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new NoSuchElementException("Project not found: " + projectId));
     }
 
     public void updateProjectStructure(String projectId, Project updates) {
         Project project = getProjectById(projectId);
-        
-        // Update only the architecture fields
         if (updates.getClasses() != null) project.setClasses(updates.getClasses());
-        if (updates.getRelationships() != null) project.setRelationships(updates.getRelationships());
-        
         project.setUpdatedAt(LocalDateTime.now().toString());
         projectRepository.save(project);
     }

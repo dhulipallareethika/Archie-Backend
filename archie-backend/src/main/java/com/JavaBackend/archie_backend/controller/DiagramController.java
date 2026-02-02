@@ -18,34 +18,37 @@ public class DiagramController {
 
     /**
      * POST /api/diagrams/generate
-     * Secured by JWT. Generates code via Python AI.
+     * Request body: { "projectId": "...", "diagramtype": "..." }
      */
-    @PostMapping("/generate")
-    public ResponseEntity<Map<String, String>> generate(
-            @RequestBody Map<String, Object> request,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        String projectId = (String) request.get("projectId");
-        String type = (String) request.get("diagramtype");
-        
-        // Passing the requirement context (classes/relationships) as text to Python
-        String requirementsText = request.get("classes").toString() + " " + request.get("relationships").toString();
-
-        Diagram diagram = diagramService.generateAndSave(projectId, type, requirementsText);
-        
-        return ResponseEntity.ok(Map.of("umlcode", diagram.getUmlCode()));
+   @PostMapping("/generate")
+public ResponseEntity<Diagram> generate(
+        @RequestBody Map<String, String> request, 
+        @AuthenticationPrincipal UserDetails userDetails) {
+    
+    String projectId = request.get("projectId");
+    
+    // Check for both 'diagramtype' and 'diagramType' to prevent nulls
+    String diagramType = request.get("diagramType");
+    if (diagramType == null) {
+        diagramType = request.get("diagramType");
     }
 
-    /**
-     * GET /api/diagrams/{diagramId}
-     * Returns the code (PlantUML, SQL, or YAML).
-     */
-    @GetMapping("/{diagramId}")
-    public ResponseEntity<Map<String, String>> viewParticular(@PathVariable String diagramId) {
-        Diagram diagram = diagramService.getDiagramDetails(diagramId);
-        if (diagram != null) {
-            return ResponseEntity.ok(Map.of("umlcode", diagram.getUmlCode()));
-        }
-        return ResponseEntity.notFound().build();
+    // Default value if both are missing
+    if (diagramType == null) {
+        diagramType = "Unknown Diagram";
     }
+
+    Diagram diagram = diagramService.generateAndSave(projectId, diagramType);
+    return ResponseEntity.ok(diagram);
+}
+
+  @GetMapping("/{diagramId}")
+public ResponseEntity<Diagram> viewParticular(@PathVariable String diagramId) {
+    Diagram diagram = diagramService.getDiagramDetails(diagramId);
+    if (diagram != null) {
+        // Return the full object so you see the ID, Type, and Code for THIS record
+        return ResponseEntity.ok(diagram);
+    }
+    return ResponseEntity.notFound().build();
+}
 }
