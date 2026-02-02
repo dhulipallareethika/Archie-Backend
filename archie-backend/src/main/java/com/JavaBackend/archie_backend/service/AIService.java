@@ -1,29 +1,54 @@
 package com.JavaBackend.archie_backend.service;
 
-import com.JavaBackend.archie_backend.model.EntityModel;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import java.util.*;
+import org.springframework.http.*;
+import java.util.Map;
+import java.util.List;
 
 @Service
 public class AIService {
 
-    private final String PYTHON_URL = "http://localhost:5000/generate-plantuml";
+    private final String BASE_URL = "http://localhost:8000"; 
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    public String getUmlFromAI(List<EntityModel> structure, String type) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        // Prepare the payload for Python
-        Map<String, Object> request = new HashMap<>();
-        request.put("structure", structure);
-        request.put("diagramType", type);
-
-        // Send to Python and get the PlantUML string back
+    public Map<String, Object> analyzeBRD(String brdText) {
+        // Correct endpoint for Sprint 1
+        String url = BASE_URL + "/analyze-brd";
+        Map<String, String> request = Map.of("brdText", brdText);
+        
         try {
-            Map<String, String> response = restTemplate.postForObject(PYTHON_URL, request, Map.class);
-            return response.get("plantuml");
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            if (response.getBody() != null && "SUCCESS".equals(response.getBody().get("status"))) {
+                return (Map<String, Object>) response.getBody().get("data");
+            }
         } catch (Exception e) {
-            return "' Error: AI Service unreachable\n@startuml\nclass Error\n@enduml";
+            System.err.println("Analysis Error: " + e.getMessage());
         }
+        return Map.of("classes", List.of(), "relationships", List.of());
+    }
+
+    public String getUmlFromAI(String requirements, String diagramType) {
+        // Correct endpoint for Sprint 2
+        String url = BASE_URL + "/generate";
+        Map<String, String> request = Map.of(
+            "diagramType", diagramType,
+            "requirementsText", requirements
+        );
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
+                return (String) data.get("diagramCode");
+            }
+        } catch (Exception e) {
+            System.err.println("AI Generation Error: " + e.getMessage());
+        }
+        return null;
     }
 }

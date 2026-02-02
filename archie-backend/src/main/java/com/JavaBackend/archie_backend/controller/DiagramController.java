@@ -1,54 +1,51 @@
 package com.JavaBackend.archie_backend.controller;
 
-import com.JavaBackend.archie_backend.model.*;
-import com.JavaBackend.archie_backend.repository.*;
-import com.JavaBackend.archie_backend.service.AIService;
+import com.JavaBackend.archie_backend.model.Diagram;
+import com.JavaBackend.archie_backend.service.DiagramService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/diagrams")
 public class DiagramController {
 
-    @Autowired private DiagramRepository diagramRepository;
-    @Autowired private ProjectRepository projectRepository;
-    @Autowired private AIService aiService;
+    @Autowired
+    private DiagramService diagramService;
 
     /**
-     * 1. GENERATE UML: Uses the classes and relationships stored in the Project table
+     * POST /api/diagrams/generate
+     * Secured by JWT. Generates code via Python AI.
      */
-    @PostMapping("/generate/{projectId}")
-    public ResponseEntity<Diagram> generate(@PathVariable String projectId, @RequestParam String type) {
-        return projectRepository.findById(projectId).map(project -> {
-            // Fetch the classes/relationships you stored in the Project entity
-            List<EntityModel> structure = project.getExtractedStructure();
-            
-            // Call Python AI to convert this structure into PlantUML code
-            String generatedUml = aiService.getUmlFromAI(structure, type);
+    @PostMapping("/generate")
+    public ResponseEntity<Map<String, String>> generate(
+            @RequestBody Map<String, Object> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        String projectId = (String) request.get("projectId");
+        String type = (String) request.get("diagramtype");
+        
+        // Passing the requirement context (classes/relationships) as text to Python
+        String requirementsText = request.get("classes").toString() + " " + request.get("relationships").toString();
 
-            Diagram diagram = new Diagram(projectId, type, generatedUml, "COMPLETED");
-            return ResponseEntity.ok(diagramRepository.save(diagram));
-        }).orElse(ResponseEntity.notFound().build());
+        Diagram diagram = diagramService.generateAndSave(projectId, type, requirementsText);
+        
+        return ResponseEntity.ok(Map.of("umlcode", diagram.getUmlCode()));
     }
 
     /**
-     * 2. VIEW PARTICULAR: Get the specific diagram including the full umlCode
+     * GET /api/diagrams/{diagramId}
+     * Returns the code (PlantUML, SQL, or YAML).
      */
     @GetMapping("/{diagramId}")
-    public ResponseEntity<Diagram> viewParticular(@PathVariable String diagramId) {
-        return diagramRepository.findById(diagramId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    /**
-     * 3. VIEW ALL: Response contains only diagramId and diagramType
-     */
-    @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<Diagram>> viewAll(@PathVariable String projectId) {
-        return ResponseEntity.ok(diagramRepository.findByProjectIdSummary(projectId));
+    public ResponseEntity<Map<String, String>> viewParticular(@PathVariable String diagramId) {
+        Diagram diagram = diagramService.getDiagramDetails(diagramId);
+        if (diagram != null) {
+            return ResponseEntity.ok(Map.of("umlcode", diagram.getUmlCode()));
+        }
+        return ResponseEntity.notFound().build();
     }
 }

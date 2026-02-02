@@ -3,45 +3,54 @@ package com.JavaBackend.archie_backend.controller;
 import com.JavaBackend.archie_backend.model.Project;
 import com.JavaBackend.archie_backend.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/projects")
-//@CrossOrigin(origins = "*") // Allows React frontend to connect
+@RequestMapping("/api/project")
 public class ProjectController {
 
-    @Autowired
-    private ProjectService projectService;
+    @Autowired 
+    private ProjectService1 projectService;
 
-    // POST: Create a new project
+    // 1. CREATE: Analyzes BRD and saves the project
     @PostMapping
-    public ResponseEntity<Project> createProject(@RequestBody Project project) {
-        Project savedProject = projectService.createProject(project);
-        return ResponseEntity.ok(savedProject);
+    public ResponseEntity<?> createProject(@RequestBody Project project, 
+                                          @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            // userDetails.getUsername() contains the userId from our JWT fix
+            project.setUserId(userDetails.getUsername());
+            Project savedProject = projectService.createProject(project);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedProject);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("error", "Failed to create project: " + e.getMessage()));
+        }
     }
 
-    // GET: List all projects for a specific user (Pass userId as a query param or from JWT)
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Project>> getUserProjects(@PathVariable String userId) {
-        List<Project> projects = projectService.getProjectsByUserId(userId);
+    // 2. LIST ALL: Returns names and IDs for the dashboard
+    @GetMapping
+    public ResponseEntity<List<Map<String, String>>> getProjectsList(@AuthenticationPrincipal UserDetails userDetails) {
+        // This extracts projects only for the logged-in User ID
+        List<Map<String, String>> projects = projectService.getProjectNamesByUserId(userDetails.getUsername());
         return ResponseEntity.ok(projects);
     }
 
-    // GET: Get details of a specific project
+    // 3. VIEW SINGLE: Gets full details by ID
     @GetMapping("/{projectId}")
     public ResponseEntity<Project> getProjectById(@PathVariable String projectId) {
-        return projectService.getProjectById(projectId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
 
-    // PUT: Update project information (Modify name or BRD)
+    // 4. UPDATE: Edits classes/relationships
     @PutMapping("/{projectId}")
-    public ResponseEntity<Project> updateProject(@PathVariable String projectId, @RequestBody Project projectDetails) {
-        Project updatedProject = projectService.updateProject(projectId, projectDetails);
-        return ResponseEntity.ok(updatedProject);
+    public ResponseEntity<Map<String, String>> editProject(@PathVariable String projectId, @RequestBody Project updates) {
+        projectService.updateProjectStructure(projectId, updates);
+        return ResponseEntity.ok(Map.of("message", "Project updated successfully"));
     }
 }

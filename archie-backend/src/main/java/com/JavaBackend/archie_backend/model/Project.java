@@ -16,43 +16,33 @@ public class Project {
     private String projectName;
     private String brdText; 
     
-    // This holds the structured data returned by the Python AI
-    private List<EntityModel> extractedStructure; 
+    // AI Structured data fields
+    private List<Object> classes; 
+    private List<Object> relationships;
 
     @CreatedDate
-    private LocalDateTime createdAt;
+    private String createdAt;
 
     @LastModifiedDate
-    private LocalDateTime updatedAt;
+    private String updatedAt;
 
-    // Constructors
     public Project() {}
-
-    public Project(String userId, String projectName, String brdText) {
-        this.userId = userId;
-        this.projectName = projectName;
-        this.brdText = brdText;
-    }
 
     // Getters and Setters
     public String getProjectId() { return projectId; }
     public void setProjectId(String projectId) { this.projectId = projectId; }
-
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
-
     public String getProjectName() { return projectName; }
     public void setProjectName(String projectName) { this.projectName = projectName; }
-
     public String getBrdText() { return brdText; }
     public void setBrdText(String brdText) { this.brdText = brdText; }
-
-    public List<EntityModel> getExtractedStructure() { return extractedStructure; }
-    public void setExtractedStructure(List<EntityModel> extractedStructure) { this.extractedStructure = extractedStructure; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public List<Object> getClasses() { return classes; }
+    public void setClasses(List<Object> classes) { this.classes = classes; }
+    public List<Object> getRelationships() { return relationships; }
+    public void setRelationships(List<Object> relationships) { this.relationships = relationships; }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }

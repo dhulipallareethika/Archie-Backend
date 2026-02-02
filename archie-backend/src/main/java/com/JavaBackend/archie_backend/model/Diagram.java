@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 @Document(collection = "diagrams")
 public class Diagram {
-
     @Id
     private String diagramId;
     private String projectId;
@@ -38,5 +37,4 @@ public class Diagram {
     public void setUmlCode(String umlCode) { this.umlCode = umlCode; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,7 +22,6 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
     }
-
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleEmailExists(
             EmailAlreadyExistsException ex) {
@@ -31,7 +31,6 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
     }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(
             Exception ex) {
@@ -41,7 +40,6 @@ public class GlobalExceptionHandler {
                 "Something went wrong"
         );
     }
-
     private ResponseEntity<Map<String, Object>> buildResponse(
             HttpStatus status,
             String message) {
@@ -50,5 +48,10 @@ public class GlobalExceptionHandler {
         body.put("message", message);
 
         return new ResponseEntity<>(body, status);
+    }
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
     }
 }
