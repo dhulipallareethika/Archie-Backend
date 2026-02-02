@@ -34,12 +34,9 @@ public class AuthService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPassword(
-                passwordEncoder.encode(request.getPassword())
-        );
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
-
         return "User registered successfully";
     }
 
@@ -48,15 +45,10 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException();
         }
 
-        return jwtUtil.generateToken(
-                user.getUserId(),
-                user.getEmail()
-        );
+        return jwtUtil.generateToken(user.getUserId(), user.getEmail());
     }
 }

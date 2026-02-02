@@ -2,46 +2,41 @@ package com.JavaBackend.archie_backend.service;
 
 import com.JavaBackend.archie_backend.model.Diagram;
 import com.JavaBackend.archie_backend.repository.DiagramRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class DiagramService {
 
-    @Autowired private DiagramRepository diagramRepository;
-    @Autowired private AIService aiService; // This service calls your Python AI
+    private final DiagramRepository diagramRepository;
+
+    public DiagramService(DiagramRepository diagramRepository) {
+        this.diagramRepository = diagramRepository;
+    }
 
     public Diagram generateAndSave(String projectId, String diagramType) {
-    try {
-        // 1. AI decides the code format (logic remains internal)
-        String aiDecidedType = "plantuml"; 
-        String generatedCode = "@startuml\nclass User\n@enduml";
 
-        Diagram.DiagramCode codeObj = new Diagram.DiagramCode();
-        codeObj.setType(aiDecidedType);
-        codeObj.setCode(generatedCode);
+        String umlType = "plantuml";
+        String umlCode = "@startuml\nclass User\n@enduml";
 
-        // 2. Create the Diagram object
+        Diagram.DiagramCode code = new Diagram.DiagramCode(umlType, umlCode);
+
         Diagram diagram = new Diagram();
         diagram.setProjectId(projectId);
-        
-        // 3. Set the diagramType EXACTLY as received from the controller
-        diagram.setDiagramType(diagramType); 
-        
-        diagram.setUmlcode(codeObj);
+        diagram.setDiagramType(diagramType);
+        diagram.setUmlCode(code);
         diagram.setStatus("COMPLETED");
+        diagram.setCreatedAt(LocalDateTime.now());
 
         return diagramRepository.save(diagram);
-    } catch (Exception e) {
-        Diagram failed = new Diagram();
-        failed.setProjectId(projectId);
-        failed.setDiagramType(diagramType);
-        failed.setStatus("FAILED");
-        return diagramRepository.save(failed);
     }
-}
 
     public Diagram getDiagramDetails(String diagramId) {
-        return diagramRepository.findById(diagramId).orElse(null);
+
+        return diagramRepository.findById(diagramId)
+                .orElseThrow(() ->
+                        new RuntimeException("Diagram not found: " + diagramId)
+                );
     }
 }

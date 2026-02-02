@@ -1,54 +1,43 @@
 package com.JavaBackend.archie_backend.controller;
 
+import com.JavaBackend.archie_backend.dto.GenerateDiagramRequest;
 import com.JavaBackend.archie_backend.model.Diagram;
 import com.JavaBackend.archie_backend.service.DiagramService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/diagrams")
 public class DiagramController {
 
-    @Autowired
-    private DiagramService diagramService;
+    private final DiagramService diagramService;
 
-    /**
-     * POST /api/diagrams/generate
-     * Request body: { "projectId": "...", "diagramtype": "..." }
-     */
-   @PostMapping("/generate")
-public ResponseEntity<Diagram> generate(
-        @RequestBody Map<String, String> request, 
-        @AuthenticationPrincipal UserDetails userDetails) {
-    
-    String projectId = request.get("projectId");
-    
-    // Check for both 'diagramtype' and 'diagramType' to prevent nulls
-    String diagramType = request.get("diagramType");
-    if (diagramType == null) {
-        diagramType = request.get("diagramType");
+    public DiagramController(DiagramService diagramService) {
+        this.diagramService = diagramService;
     }
 
-    // Default value if both are missing
-    if (diagramType == null) {
-        diagramType = "Unknown Diagram";
-    }
+    // GENERATE DIAGRAM
+    @PostMapping("/generate")
+    public ResponseEntity<Diagram> generateDiagram(
+            @RequestBody GenerateDiagramRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-    Diagram diagram = diagramService.generateAndSave(projectId, diagramType);
-    return ResponseEntity.ok(diagram);
-}
+        Diagram diagram = diagramService.generateAndSave(
+                request.getProjectId(),
+                request.getDiagramType()
+        );
 
-  @GetMapping("/{diagramId}")
-public ResponseEntity<Diagram> viewParticular(@PathVariable String diagramId) {
-    Diagram diagram = diagramService.getDiagramDetails(diagramId);
-    if (diagram != null) {
-        // Return the full object so you see the ID, Type, and Code for THIS record
         return ResponseEntity.ok(diagram);
     }
-    return ResponseEntity.notFound().build();
-}
+
+    // VIEW DIAGRAM
+    @GetMapping("/{diagramId}")
+    public ResponseEntity<Diagram> getDiagram(@PathVariable String diagramId) {
+
+        return ResponseEntity.ok(
+                diagramService.getDiagramDetails(diagramId)
+        );
+    }
 }

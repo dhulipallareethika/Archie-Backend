@@ -19,16 +19,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-    // Search by MongoDB _id (userId) instead of email
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found with ID: " + userId));
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
 
-    return new org.springframework.security.core.userdetails.User(
-            user.getUserId(), // Use the ID as the principal username
-            user.getPassword(),
-            Collections.emptyList()
-    );
-}
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with id: " + userId)
+                );
 
+        return new org.springframework.security.core.userdetails.User(
+                user.getUserId(),
+                user.getPassword(),
+                Collections.emptyList()
+        );
+    }
 }
