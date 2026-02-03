@@ -3,8 +3,7 @@ package com.JavaBackend.archie_backend.service;
 import com.JavaBackend.archie_backend.config.JwtUtil;
 import com.JavaBackend.archie_backend.dto.LoginRequest;
 import com.JavaBackend.archie_backend.dto.SignupRequest;
-import com.JavaBackend.archie_backend.exception.EmailAlreadyExistsException;
-import com.JavaBackend.archie_backend.exception.InvalidCredentialsException;
+import com.JavaBackend.archie_backend.exception.GlobalExceptionHandler.*; 
 import com.JavaBackend.archie_backend.model.User;
 import com.JavaBackend.archie_backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,18 +16,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
 
     public String registerUser(SignupRequest request) {
-
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException();
+            throw new EmailAlreadyExistsException(); 
         }
 
         User user = new User();
@@ -41,7 +37,6 @@ public class AuthService {
     }
 
     public String login(LoginRequest request) {
-
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 

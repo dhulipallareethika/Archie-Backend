@@ -4,6 +4,10 @@ import com.JavaBackend.archie_backend.dto.LoginRequest;
 import com.JavaBackend.archie_backend.dto.SignupRequest;
 import com.JavaBackend.archie_backend.service.AuthService;
 import jakarta.validation.Valid;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,12 +22,18 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@Valid @RequestBody SignupRequest request) {
-        return ResponseEntity.ok(authService.registerUser(request));
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody SignupRequest request) {
+        String message = authService.registerUser(request);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginRequest request) {
+        String token = authService.login(request);
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        return ResponseEntity.ok(response);
     }
 }
