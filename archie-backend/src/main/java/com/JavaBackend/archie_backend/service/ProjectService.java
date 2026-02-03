@@ -1,7 +1,9 @@
 package com.JavaBackend.archie_backend.service;
 
 import com.JavaBackend.archie_backend.model.Project;
+import com.JavaBackend.archie_backend.model.Diagram;
 import com.JavaBackend.archie_backend.repository.ProjectRepository;
+import com.JavaBackend.archie_backend.repository.DiagramRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -9,81 +11,56 @@ import java.util.*;
 
 @Service
 public class ProjectService {
-
     private final ProjectRepository projectRepository;
+    private final DiagramRepository diagramRepository;
 
-    // Temporary mock flag (remove when AI service is ready)
-    private static final boolean MOCK_MODE = true;
-
-    public ProjectService(ProjectRepository projectRepository) {
+    public ProjectService(ProjectRepository projectRepository, DiagramRepository diagramRepository) {
         this.projectRepository = projectRepository;
+        this.diagramRepository = diagramRepository;
     }
 
-    public Project createProject(Project project) {
-
+    public Map<String, Object> createProject(Project project) {
+        if (projectRepository.existsByProjectNameAndUserId(project.getProjectName(), project.getUserId())) {
+            throw new RuntimeException("Project name already exists");
+        }
         project.setProjectId(null);
         project.setCreatedAt(LocalDateTime.now());
-        project.setUpdatedAt(LocalDateTime.now());
+        
+        Project saved = projectRepository.save(project);
 
-        if (MOCK_MODE) {
-            project.setClasses(generateMockClasses());
-        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("projectid", saved.getProjectId());
+        response.put("projectname", saved.getProjectName());
+        return response;
+    }
 
-        return projectRepository.save(project);
+    // THIS IS THE METHOD YOU WERE MISSING
+    public Map<String, Object> getProjectDetailsWithDiagrams(String projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new NoSuchElementException("Project not found: " + projectId));
+
+        List<Diagram> diagrams = diagramRepository.findByProjectIdSummary(projectId);
+
+        List<Map<String, String>> diagramSummary = diagrams.stream()
+                .map(d -> Map.of(
+                        "diagramid", d.getDiagramId(),
+                        "diagramtype", d.getDiagramType()
+                ))
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("projectid", project.getProjectId());
+        response.put("projectname", project.getProjectName());
+        response.put("diagrams", diagramSummary);
+
+        return response;
     }
 
     public List<Map<String, String>> getProjectNamesByUserId(String userId) {
-
         return projectRepository.findByUserId(userId).stream()
                 .map(p -> Map.of(
                         "projectid", p.getProjectId(),
                         "projectname", p.getProjectName()
-                ))
-                .toList();
-    }
-
-    public Project getProjectById(String projectId) {
-
-        return projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new NoSuchElementException("Project not found: " + projectId)
-                );
-    }
-
-    public void updateProjectStructure(String projectId, Project updates) {
-
-        Project project = getProjectById(projectId);
-
-        if (updates.getClasses() != null) {
-            project.setClasses(updates.getClasses());
-        }
-
-        project.setUpdatedAt(LocalDateTime.now());
-        projectRepository.save(project);
-    }
-
-    private List<Project.ClassModel> generateMockClasses() {
-
-        Project.ClassModel userClass = new Project.ClassModel();
-        userClass.setClassName("User");
-
-        Project.Attribute id = new Project.Attribute();
-        id.setName("id");
-        id.setType("String");
-        id.setNature(Project.Attribute.Nature.Identifying);
-        id.setRequired(true);
-
-        Project.Relationship rel = new Project.Relationship();
-        rel.setSource("User");
-        rel.setTarget("Order");
-        rel.setNature(Project.Relationship.Nature.Association);
-        rel.setSourceType(Project.Relationship.Type.One);
-        rel.setTargetType(Project.Relationship.Type.Many);
-        rel.setLabel("places");
-
-        userClass.setAttributes(List.of(id));
-        userClass.setRelationships(List.of(rel));
-
-        return List.of(userClass);
+                )).toList();
     }
 }

@@ -17,10 +17,8 @@ public class Project {
     private String brdText;
 
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     private List<ClassModel> classes;
-
 
     public static class ClassModel {
         private String className;
@@ -78,7 +76,6 @@ public class Project {
         public void setLabel(String label) { this.label = label; }
     }
 
-
     public String getProjectId() { return projectId; }
     public void setProjectId(String projectId) { this.projectId = projectId; }
     public String getUserId() { return userId; }
@@ -91,6 +88,4 @@ public class Project {
     public void setClasses(List<ClassModel> classes) { this.classes = classes; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
